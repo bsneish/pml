@@ -1,0 +1,54 @@
+---
+title: "Practical Machine Learning Course Project"
+author: "bsneish"
+date: "January 24, 2015"
+output: html_document
+---
+Load libraries and dataset
+
+```{r}
+setwd("/Users/bn")
+library(caret)
+train<-read.csv("pml-training.csv")
+test<-read.csv("pml-testing.csv")
+```
+
+remove columns from training set that we don't have any data for in the testing set (all NA)
+
+```{r}
+train2<-train[,colSums(is.na(test)) != nrow(test)]
+```
+
+remove row numbers and timestamp columns from training set
+
+```{r}
+train3<-train2[,c(2,6:60)]
+```
+
+train model using random forest, a robust classifier. this can take a while..
+
+```{r}
+modFit <- train(classe ~ .,method="rf",data=train3)
+modFit$finalModel
+```
+
+OOB estimate of  error rate: 0.12%, which is good. very few errors in classification. will use to predict and produce submission files
+
+
+```{r}
+answers<-predict(modFit,newdata=test)
+
+
+answers = rep("A", 20)
+
+pml_write_files = function(x){
+  n = length(x)
+  for(i in 1:n){
+    filename = paste0("problem_id_",i,".txt")
+    write.table(x[i],file=filename,quote=FALSE,row.names=FALSE,col.names=FALSE)
+  }
+}
+
+setwd("/Users/bn/test")
+pml_write_files(answers)
+```
